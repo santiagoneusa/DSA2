@@ -1,6 +1,6 @@
 from collections import deque
 
-archivo = open('inputMalo.txt')
+archivo = open('input2.txt')
 
 def verify(airplanes, airport, events):
 
@@ -194,6 +194,7 @@ def backtracking(airport, historial_matrix, max_airplanes):
                 max_airplanes -= 1
                 block(airport, historial_matrix[i][2], abs(historial_matrix[i][0]))
             historial_matrix[i][1] = 0
+            historial_matrix[i][2] = 0
             i -= 1
 
         if i < 0: return []
