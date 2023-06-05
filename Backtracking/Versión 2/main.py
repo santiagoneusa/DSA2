@@ -1,80 +1,90 @@
 from collections import deque
 
-archivo = open('input2.txt')
+archivo = open('.txt')
 
-def verify(airplanes, airport, events):
+def verificar(aviones, aeropuerto, eventos):
 
-    if '==' not in airport: return 0
-    if len(airport) < 2: return 0
+    if '==' not in aeropuerto: return 0
+    if len(aeropuerto) < 2: return 0
 
-    events_counter = 0
-    airplanes_counter = 0
-    max_airplanes = 0
+    contador_de_eventos = 0
+    contador_de_aviones = 0
+    máximos_aviones = 0
 
-    for event in events:
+    for evento in eventos:
         
-        if event > 0: airplanes_counter += 1
-        else: airplanes_counter -= 1
-        if airplanes_counter > airplanes or airplanes_counter > len(airport)-1: return 0
+        if evento > 0: contador_de_aviones += 1
+        else: contador_de_aviones -= 1
+        if contador_de_aviones > aviones or contador_de_aviones > len(aeropuerto)-1: return 0
         
-        if airplanes_counter > max_airplanes: max_airplanes = airplanes_counter
+        if contador_de_aviones > máximos_aviones: máximos_aviones = contador_de_aviones
 
-        events_counter += event
-        if events_counter < 0: return 0
+        contador_de_eventos += evento
+        if contador_de_eventos < 0: return 0
     
-    return max_airplanes
+    return máximos_aviones
 
-def adjacency_list(rows, columns):
+def crear_aeropuerto(filas, columnas):
 
-    matrix = []
-    to_check = deque()
+    matriz_input = []
+    por_evaluar = deque()
 
-    for i in range(rows):
-        row = archivo.readline().strip().split()
+    for i in range(filas):
+        fila = archivo.readline().strip().split()
 
-        for j in range(columns):
-            if row[j] == '==': to_check.append((i, j))
-            elif row[j] not in ['..', '##']: row[j] = int(row[j])
+        for j in range(columnas):
+            if fila[j] == '==': por_evaluar.append((i, j))
+            elif fila[j] not in ['..', '##']: fila[j] = int(fila[j])
         
-        matrix.append(row)
+        matriz_input.append(fila)
     
-    airport = {}
-    coordinates = [-1, 0, 0, 1, 1, 0, 0, -1]
+    aeropuerto = {}
+    coordenadas = [-1, 0, 0, 1, 1, 0, 0, -1]
     
-    while to_check:
+    while por_evaluar:
 
-        point = to_check.pop()
-        point_set = set()
-        temporal_visited = [point]
+        plaza_actual = por_evaluar.pop()
+        aledaños_a_la_plaza = set()
+        visitados_temporales = [plaza_actual]
         
         i = 0        
-        while i < len(temporal_visited):
-            temporal_point = temporal_visited[i]
+        while i < len(visitados_temporales):
+            plaza_temporal = visitados_temporales[i]
            
             for j in range(0, 8, 2):
 
-                x = temporal_point[0] + coordinates[j]
-                y = temporal_point[1] + coordinates[j+1]
+                x = plaza_temporal[0] + coordenadas[j]
+                y = plaza_temporal[1] + coordenadas[j+1]
             
-                if 0 <= x < len(matrix) and 0 <= y < len(matrix[0]):
-                    if type(matrix[x][y]) == int and matrix[x][y] != matrix[point[0]][point[1]]:
-                        point_set.add(matrix[x][y])
-                        if matrix[x][y] not in airport:
-                            to_check.append((x,y))
-                    elif matrix[x][y] == '..' and (x,y) not in temporal_visited: temporal_visited.append((x, y))
+                if 0 <= x < len(matriz_input) and 0 <= y < len(matriz_input[0]):
+                    if type(matriz_input[x][y]) == int and matriz_input[x][y] != matriz_input[plaza_actual[0]][plaza_actual[1]]:
+                        aledaños_a_la_plaza.add(matriz_input[x][y])
+                        if matriz_input[x][y] not in aeropuerto:
+                            por_evaluar.append((x,y))
+                    elif matriz_input[x][y] == '..' and (x,y) not in visitados_temporales: visitados_temporales.append((x, y))
 
             i += 1
         
-        if matrix[point[0]][point[1]] in airport: airport[matrix[point[0]][point[1]]][2] = airport[matrix[point[0]][point[1]]][2] | point_set
-        else: airport[matrix[point[0]][point[1]]] = [0, 0, point_set]
+        if matriz_input[plaza_actual[0]][plaza_actual[1]] in aeropuerto: aeropuerto[matriz_input[plaza_actual[0]][plaza_actual[1]]][2] = aeropuerto[matriz_input[plaza_actual[0]][plaza_actual[1]]][2] | aledaños_a_la_plaza
+        else: aeropuerto[matriz_input[plaza_actual[0]][plaza_actual[1]]] = [0, 0, aledaños_a_la_plaza]
 
-    return airport
+    return aeropuerto
 
-def block(aeropuerto, parqueadero, avión):
 
+def crear_historial(events):
+
+    pila_historial = []
+    for i in events: pila_historial.append([i, 0, 0])
+    return pila_historial
+
+
+def bloquear(aeropuerto, parqueadero, avión):
+
+    # bloquea el parqueadero que se solicitó
     aeropuerto[parqueadero][0] = 1
     aeropuerto[parqueadero][1] = avión
 
+    # busca los alcanzables, parqueaderos a los que se puede llegar sin pasar por el parqueadero que se va a tapar
     alcanzables = deque()
     alcanzables.append('==')
     i = 0
@@ -85,12 +95,15 @@ def block(aeropuerto, parqueadero, avión):
         i += 1
 
     alcanzables.popleft()
+    # si todos los aledaños son alcanzables, se para la ejecución de la función
     if aeropuerto[parqueadero][2] <= set(alcanzables): return
+    # como no hay alcanzables, se bloquean todos los parqueaderos del aeropuerto y se para la ejecución
     elif len(alcanzables) == 0:
         for i in aeropuerto:
             if i != '==' and aeropuerto[i][0] != 1: aeropuerto[i][0] = 1
         return
 
+    # como no todos están disponibles y no todos se pueden bloquear, se buscan aquellos que se pueden bloquear
     bloqueables = deque()
     bloqueables.append(parqueadero)
     i = 0
@@ -103,143 +116,154 @@ def block(aeropuerto, parqueadero, avión):
     for i in bloqueables: aeropuerto[i][0] = 1
 
 
-def unblock(airport, parking):
+def desbloquear(aeropuerto, parqueadero):
 
-    visited = list(airport[parking][2])
+    desbloqueables = list(aeropuerto[parqueadero][2])
     i = 0
+
     # sacar los desocupados
-    while i < len(visited) and visited:
-        if airport[visited[i]][0] == 0: visited.pop(i)
+    while i < len(desbloqueables) and desbloqueables:
+        if aeropuerto[desbloqueables[i]][0] == 0: desbloqueables.pop(i)
         else: i += 1
 
     # si todos sus adyacentes estaban disponibles, se desocupa el espacio y ya
-    if len(visited) == 0:
-        airport[parking][0] = 0
-        airport[parking][1] = 0
+    if len(desbloqueables) == 0:
+        aeropuerto[parqueadero][0] = 0
+        aeropuerto[parqueadero][1] = 0
         return True
+    
     # si todos sus adyacentes están ocupados, no se puede desocupar el espacio
-    elif len(visited) == len(airport[parking][2]) and parking not in airport['=='][2]: return False
+    elif len(desbloqueables) == len(aeropuerto[parqueadero][2]) and parqueadero not in aeropuerto['=='][2]: return False
 
     # los que tengan un avión no se pueden desocupar, entonces se sacan de la pila
     i = 0
-    while i < len(visited) and visited:
-        if airport[visited[i]][1] != 0: visited.pop(i)
+    while i < len(desbloqueables) and desbloqueables:
+        if aeropuerto[desbloqueables[i]][1] != 0: desbloqueables.pop(i)
         else: i += 1
 
     # aquí mete todos los que está tapando el parqueadero que se quiere desocupar
     i = 0
-    while i < len(visited):
-        for adjacent in airport[visited[i]][2]:
-            if adjacent != parking and adjacent not in visited and airport[adjacent][0] == 1 and airport[adjacent][1] == 0:
-                visited.append(adjacent)
+    while i < len(desbloqueables):
+        for adjacent in aeropuerto[desbloqueables[i]][2]:
+            if adjacent != parqueadero and adjacent not in desbloqueables and aeropuerto[adjacent][0] == 1 and aeropuerto[adjacent][1] == 0:
+                desbloqueables.append(adjacent)
         i += 1
 
-    airport[parking][0] = 0
-    airport[parking][1] = 0
-    for j in visited: airport[j][0] = 0
+    aeropuerto[parqueadero][0] = 0
+    aeropuerto[parqueadero][1] = 0
+    for j in desbloqueables: aeropuerto[j][0] = 0
     return True
     
-def historial(events):
 
-    historial_matrix = []
-    for i in events: historial_matrix.append([i, 0, 0])
-    return historial_matrix
+def backtracking(aeropuerto, pila_historial, máximo_aviones): 
 
-def backtracking(airport, historial_matrix, max_airplanes): 
+    puntero = 0
 
-    i = 0
-    while 0 <= i < len(historial_matrix) and historial_matrix[0][1] < len(airport):
-        event = historial_matrix[i][0]
-        found = False
+    while 0 <= puntero < len(pila_historial) and pila_historial[0][1] < len(aeropuerto):
 
-        if event > 0:
-            max_airplanes -= 1
-            for attemp, parking in enumerate(airport.keys()):
-                if parking != '==' and airport[parking][0] == 0 and attemp > historial_matrix[i][1]:
-                    block(airport, parking, event)
-                    found = True
-                    historial_matrix[i][2] = parking
-                    historial_matrix[i][1] = attemp
+        evento = pila_historial[puntero][0]
+        encontrado = False
+
+        if evento > 0:
+            máximo_aviones -= 1
+            for intento, parqueadero in enumerate(aeropuerto.keys()):
+                if parqueadero != '==' and aeropuerto[parqueadero][0] == 0 and intento > pila_historial[puntero][1]:
+                    bloquear(aeropuerto, parqueadero, evento)
+                    encontrado = True
+                    pila_historial[puntero][2] = parqueadero
+                    pila_historial[puntero][1] = intento
                     break
-                if attemp > historial_matrix[i][1]: historial_matrix[i][1] = attemp
+                if intento > pila_historial[puntero][1]: pila_historial[puntero][1] = intento
 
             parqueaderos_disponibles = 0
-            for j in airport.keys():
-                if airport[j][0] == 0 and j != '==': parqueaderos_disponibles += 1
-            if parqueaderos_disponibles < max_airplanes and historial_matrix[i][1] != len(airport)-1:
-                unblock(airport, historial_matrix[i][2])
-                historial_matrix[i][2] = 0
-                max_airplanes += 1
+            for j in aeropuerto.keys():
+                if aeropuerto[j][0] == 0 and j != '==': parqueaderos_disponibles += 1
+            if parqueaderos_disponibles < máximo_aviones and pila_historial[puntero][1] != len(aeropuerto)-1:
+                desbloquear(aeropuerto, pila_historial[puntero][2])
+                pila_historial[puntero][2] = 0
+                máximo_aviones += 1
                 continue
         
+
         else:
-            max_airplanes += 1
-            for j in range(len(historial_matrix)):
-                if historial_matrix[j][0]== abs(event):
-                    if unblock(airport, historial_matrix[j][2]):
-                        historial_matrix[i][2] = historial_matrix[j][2]
-                        found = True
+
+            máximo_aviones += 1
+
+            for j in range(len(pila_historial)):
+                if pila_historial[j][0]== abs(evento):
+                    if desbloquear(aeropuerto, pila_historial[j][2]):
+                        pila_historial[puntero][2] = pila_historial[j][2]
+                        encontrado = True
                     break
-            historial_matrix[i][1] = len(airport) - 1
+                
+            pila_historial[puntero][1] = len(aeropuerto) - 1
         
-        if found:
-            i += 1
+
+        if encontrado:
+            puntero += 1
             continue 
 
-        while historial_matrix[i][1] == len(airport)-1:
-            if historial_matrix[i][0] > 0 and historial_matrix[i][2] != 0:
-                max_airplanes += 1
-                unblock(airport, historial_matrix[i][2])
-            elif historial_matrix[i][0] < 0 and historial_matrix[i][2] != 0:
-                max_airplanes -= 1
-                block(airport, historial_matrix[i][2], abs(historial_matrix[i][0]))
-            historial_matrix[i][1] = 0
-            historial_matrix[i][2] = 0
-            i -= 1
 
-        if i < 0: return []
+        while pila_historial[puntero][1] == len(aeropuerto)-1:
+            if pila_historial[puntero][0] > 0 and pila_historial[puntero][2] != 0:
+                máximo_aviones += 1
+                desbloquear(aeropuerto, pila_historial[puntero][2])
+            elif pila_historial[puntero][0] < 0 and pila_historial[puntero][2] != 0:
+                máximo_aviones -= 1
+                bloquear(aeropuerto, pila_historial[puntero][2], abs(pila_historial[puntero][0]))
+            pila_historial[puntero][1] = 0
+            pila_historial[puntero][2] = 0
+            puntero -= 1
+
+        if puntero < 0: return []
         else:
-            unblock(airport, historial_matrix[i][2])
-            historial_matrix[i][2] = 0
+            desbloquear(aeropuerto, pila_historial[puntero][2])
+            pila_historial[puntero][2] = 0
 
-    output = {historial_matrix[j][0]: historial_matrix[j][1] for j in range(len(historial_matrix)) if historial_matrix[j][0] > 0}
+    output = {pila_historial[j][0]: pila_historial[j][1] for j in range(len(pila_historial)) if pila_historial[j][0] > 0}
     return output
 
 
 def main():
 
-    case_counter = 1
+    contador_de_casos = 1
     while True:
     
-        first_line = archivo.readline().strip()
-        if first_line[0] == '0': break
-        airplanes, rows, columns = map(int, first_line.split())
+        primera_línea = archivo.readline().strip()
+        if primera_línea[0] == '0': break
+        aviones, filas, columnas = map(int, primera_línea.split())
 
-        airport = adjacency_list(rows, columns)
+        aeropuerto = crear_aeropuerto(filas, columnas)
 
-        events = deque(map(int, archivo.readline().strip().split()))
-        max_airplanes = verify(airplanes, airport, events)
+        eventos = deque(map(int, archivo.readline().strip().split()))
+        máximos_aviones = verificar(aviones, aeropuerto, eventos)
 
-        if max_airplanes == 0:
-            print(f'Case {case_counter}: No\n')
+        if máximos_aviones == 0:
+            print(f'Case {contador_de_casos}: No\n')
         
         else:
-            historial_matrix = historial(events)
-            output = backtracking(airport, historial_matrix, max_airplanes)
+
+            pila_historial = crear_historial(eventos)
+            output = backtracking(aeropuerto, pila_historial, máximos_aviones)
 
             if len(output) > 0:
-                print(f'Case {case_counter}: Yes')
+
+                print(f'Case {contador_de_casos}: Yes')
+                
+                # for i in eventos: print(i, end=' ')
+                # print()
+                
                 for i in output:
-                    assigned_parking = str(output[i])
-                    if len(assigned_parking) == 1:
-                        assigned_parking = '0'+assigned_parking
-                    print(assigned_parking, end=' ')
+                    parqueadero_asignado = str(output[i])
+                    if len(parqueadero_asignado) == 1:
+                        parqueadero_asignado = '0'+parqueadero_asignado
+                    print(parqueadero_asignado, end=' ')
                 print('\n')
             
             else: 
-                print(f'Case {case_counter}: No', '\n')
+                print(f'Case {contador_de_casos}: No', '\n')
 
-        case_counter += 1
+        contador_de_casos += 1
 
 
 import time
