@@ -1,7 +1,5 @@
 from collections import deque
 
-archivo = open('.txt')
-
 def verificar(aviones, aeropuerto, eventos):
 
     if '==' not in aeropuerto: return 0
@@ -30,7 +28,7 @@ def crear_aeropuerto(filas, columnas):
     por_evaluar = deque()
 
     for i in range(filas):
-        fila = archivo.readline().strip().split()
+        fila = input().split()
 
         for j in range(columnas):
             if fila[j] == '==': por_evaluar.append((i, j))
@@ -195,7 +193,7 @@ def backtracking(aeropuerto, pila_historial, máximo_aviones):
                         pila_historial[puntero][2] = pila_historial[j][2]
                         encontrado = True
                     break
-                
+
             pila_historial[puntero][1] = len(aeropuerto) - 1
         
 
@@ -229,13 +227,13 @@ def main():
     contador_de_casos = 1
     while True:
     
-        primera_línea = archivo.readline().strip()
+        primera_línea = input()
         if primera_línea[0] == '0': break
         aviones, filas, columnas = map(int, primera_línea.split())
 
         aeropuerto = crear_aeropuerto(filas, columnas)
 
-        eventos = deque(map(int, archivo.readline().strip().split()))
+        eventos = deque(map(int, input().split()))
         máximos_aviones = verificar(aviones, aeropuerto, eventos)
 
         if máximos_aviones == 0:
@@ -266,11 +264,4 @@ def main():
         contador_de_casos += 1
 
 
-import time
-
-start = time.time()
-if __name__ == '__main__': main()
-end = time.time()
-print(end - start)
-
-archivo.close()
+main()
