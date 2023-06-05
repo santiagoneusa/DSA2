@@ -1,0 +1,30 @@
+Case 1: Yes
+01 02 03 04 05 06
+
+Case 2: No
+
+Case 3: Yes
+03 02 01
+
+Case 4: Yes
+01 01 01 01 01
+
+Case 5: Yes
+01 02 01 02 01 02
+
+Case 6: No
+
+Case 7: Yes
+05 03 02 12 15 16
+
+Case 8: Yes
+01 02 03
+
+Case 9: No
+
+Case 10: No
+
+Case 11: No
+
+Case 12: No
+

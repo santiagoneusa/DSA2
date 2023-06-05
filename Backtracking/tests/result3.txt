@@ -1,0 +1,39 @@
+Case 1: No
+
+Case 2: Yes
+
+Case 3: Yes
+
+Case 4: No
+
+Case 5: Yes
+
+Case 6: No
+
+Case 7: No
+
+Case 8: Yes
+
+Case 9: Yes
+
+Case 10: Yes
+
+Case 11: Yes
+
+Case 12: Yes
+
+Case 13: No
+
+Case 14: Yes
+
+Case 15: No
+
+Case 16: Yes
+
+Case 17: Yes
+
+Case 18: No
+
+Case 19: No
+
+Case 20: Yes
