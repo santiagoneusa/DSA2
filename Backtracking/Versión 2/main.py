@@ -1,5 +1,7 @@
 from collections import deque
 
+archivo = open('inputMalo.txt')
+
 def verify(airplanes, airport, events):
 
     if '==' not in airport: return 0
@@ -28,7 +30,7 @@ def adjacency_list(rows, columns):
     to_check = deque()
 
     for i in range(rows):
-        row = input().split()
+        row = archivo.readline().strip().split()
 
         for j in range(columns):
             if row[j] == '==': to_check.append((i, j))
@@ -68,59 +70,68 @@ def adjacency_list(rows, columns):
 
     return airport
 
-def block(airport, parking, plane):
+def block(aeropuerto, parqueadero, avión):
 
-    airport[parking][0] = 1
-    airport[parking][1] = plane
-    visited = deque()
-    visited.append(parking)
+    aeropuerto[parqueadero][0] = 1
+    aeropuerto[parqueadero][1] = avión
+
+    alcanzables = deque()
+    alcanzables.append('==')
     i = 0
-
-    while i < len(visited):
-        for adjacent in airport[visited[i]][2]:
-            if adjacent not in visited and airport[adjacent][0] == 0 and adjacent not in airport['=='][2]: visited.append(adjacent)
+    while i < len(alcanzables):
+        for adyacente in aeropuerto[alcanzables[i]][2]:
+            if adyacente != parqueadero and adyacente not in alcanzables and aeropuerto[adyacente][0] == 0:
+                alcanzables.append(adyacente)
         i += 1
 
-    visited.popleft()
-    
-    if len(airport['=='][2] & set(visited)) == 0: 
-        for j in visited: airport[j][0] = 1
-    
-    else:
-        accesible = [adjacent for adjacent in airport['=='][2]]
-        
-        i = 0
-        while i < len(accesible):
-            for adjacent in airport[accesible[i]][2]:
-                if adjacent not in accesible and airport[adjacent][0] == 0 and adjacent != parking: accesible.append(adjacent)
-            i += 1
+    alcanzables.popleft()
+    if aeropuerto[parqueadero][2] <= set(alcanzables): return
+    elif len(alcanzables) == 0:
+        for i in aeropuerto:
+            if i != '==' and aeropuerto[i][0] != 1: aeropuerto[i][0] = 1
+        return
 
-        difference = set(visited) - set(accesible) 
-        for j in set(difference): airport[j][0] = 1
+    bloqueables = deque()
+    bloqueables.append(parqueadero)
+    i = 0
+    while i < len(bloqueables):
+        for adyacente in aeropuerto[bloqueables[i]][2]:
+            if adyacente not in alcanzables and adyacente not in bloqueables and aeropuerto[adyacente][0] == 0:
+                bloqueables.append(adyacente)
+        i += 1
+    
+    for i in bloqueables: aeropuerto[i][0] = 1
+
 
 def unblock(airport, parking):
 
     visited = list(airport[parking][2])
     i = 0
+    # sacar los desocupados
     while i < len(visited) and visited:
         if airport[visited[i]][0] == 0: visited.pop(i)
         else: i += 1
 
+    # si todos sus adyacentes estaban disponibles, se desocupa el espacio y ya
     if len(visited) == 0:
         airport[parking][0] = 0
         airport[parking][1] = 0
         return True
+    # si todos sus adyacentes están ocupados, no se puede desocupar el espacio
     elif len(visited) == len(airport[parking][2]) and parking not in airport['=='][2]: return False
 
+    # los que tengan un avión no se pueden desocupar, entonces se sacan de la pila
     i = 0
     while i < len(visited) and visited:
         if airport[visited[i]][1] != 0: visited.pop(i)
         else: i += 1
 
+    # aquí mete todos los que está tapando el parqueadero que se quiere desocupar
     i = 0
     while i < len(visited):
         for adjacent in airport[visited[i]][2]:
-            if adjacent not in visited and airport[adjacent][0] == 1: visited.append(adjacent)
+            if adjacent != parking and adjacent not in visited and airport[adjacent][0] == 1 and airport[adjacent][1] == 0:
+                visited.append(adjacent)
         i += 1
 
     airport[parking][0] = 0
@@ -154,9 +165,10 @@ def backtracking(airport, historial_matrix, max_airplanes):
 
             parqueaderos_disponibles = 0
             for j in airport.keys():
-                if airport[j][0] == 0 and airport[j][0] != '==': parqueaderos_disponibles += 1
+                if airport[j][0] == 0 and j != '==': parqueaderos_disponibles += 1
             if parqueaderos_disponibles < max_airplanes and historial_matrix[i][1] != len(airport)-1:
                 unblock(airport, historial_matrix[i][2])
+                historial_matrix[i][2] = 0
                 max_airplanes += 1
                 continue
         
@@ -192,23 +204,23 @@ def backtracking(airport, historial_matrix, max_airplanes):
     output = {historial_matrix[j][0]: historial_matrix[j][1] for j in range(len(historial_matrix)) if historial_matrix[j][0] > 0}
     return output
 
+
 def main():
 
     case_counter = 1
     while True:
     
-        first_line = input()
+        first_line = archivo.readline().strip()
         if first_line[0] == '0': break
         airplanes, rows, columns = map(int, first_line.split())
 
         airport = adjacency_list(rows, columns)
 
-        events = deque(map(int, input().split()))
+        events = deque(map(int, archivo.readline().strip().split()))
         max_airplanes = verify(airplanes, airport, events)
 
         if max_airplanes == 0:
-            print(f'Case {case_counter}: No')
-            print()
+            print(f'Case {case_counter}: No\n')
         
         else:
             historial_matrix = historial(events)
@@ -216,8 +228,8 @@ def main():
 
             if len(output) > 0:
                 print(f'Case {case_counter}: Yes')
-                for i in range(len(output)):
-                    assigned_parking = str(output[i+1])
+                for i in output:
+                    assigned_parking = str(output[i])
                     if len(assigned_parking) == 1:
                         assigned_parking = '0'+assigned_parking
                     print(assigned_parking, end=' ')
@@ -228,9 +240,12 @@ def main():
 
         case_counter += 1
 
+
 import time
 
 start = time.time()
 if __name__ == '__main__': main()
 end = time.time()
 print(end - start)
+
+archivo.close()
